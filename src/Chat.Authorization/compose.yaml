@@ -1,0 +1,17 @@
+﻿services:
+  chat.auth:
+    image: chat.api
+    build:
+      context: .
+      dockerfile: Chat.Api/Dockerfile
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    environment:
+      - KEYCLOAK_ADMIN_USERNAME=${KEYCLOAK_ADMIN_USERNAME}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+    env_file:
+      - ../../.env
+    ports:
+      - '8080:8080'
+    command: start-dev
