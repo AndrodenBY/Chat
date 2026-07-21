@@ -15,6 +15,8 @@ public class IdentityProviderOptions
     [Required]
     public required string TokenEndpoint { get; set; }
     [Required]
+    public required string LogoutEndpoint { get; set; }
+    [Required]
     public required string ManagementApiEndpoint { get; set; }
     [Required]
     public required string MetadataAddress { get; set; }
