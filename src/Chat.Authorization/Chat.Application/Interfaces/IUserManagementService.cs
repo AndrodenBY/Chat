@@ -5,8 +5,8 @@ namespace Chat.Application.Interfaces;
 
 public interface IUserManagementService
 {
-    Task<ErrorOr<string>> Get(string externalId, CancellationToken cancellationToken);
+    Task<ErrorOr<UserDto>> Get(string externalId, CancellationToken cancellationToken);
     Task<ErrorOr<string>> Create(UserCreateDto createDto, CancellationToken cancellationToken);
-    Task<ErrorOr<string>> Update(UserUpdateDto updateDto, CancellationToken cancellationToken);
-    Task<ErrorOr<string>> Delete(string externalId, CancellationToken cancellationToken);
+    Task<ErrorOr<Success>> Update(string externalId, UserUpdateDto updateDto, CancellationToken cancellationToken);
+    Task<ErrorOr<Success>> Delete(string externalId, CancellationToken cancellationToken);
 }

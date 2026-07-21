@@ -1,3 +1,3 @@
 namespace Chat.Application.DTOs;
 
-public record UserUpdateDto(string ExternalId, string NewUsername,string NewEmail);
+public record UserUpdateDto(string Username,string Email);
