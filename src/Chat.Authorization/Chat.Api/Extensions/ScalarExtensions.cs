@@ -9,9 +9,10 @@ public static class ScalarExtensions
     public static void AddScalarDocumentation(this IServiceCollection services)
     {
         services.AddOptions<ScalarOptions>()
-            .Configure<IOptions<KeycloakOptions>>((options, keycloakConfig) =>
+            .Configure<IOptions<IdentityProviderOptions>, IOptionsMonitor<IdentityProviderClientOptions>>((options, identityProviderConfig, clientConfig) =>
             {
-                var keycloakOptions = keycloakConfig.Value;
+                var identityProvider = identityProviderConfig.Value;
+                var userClient = clientConfig.Get(IdentityProviderClientOptions.UserClient);
 
                 options
                     .WithTitle("Chat Auth")
@@ -19,11 +20,11 @@ public static class ScalarExtensions
                     .AddPreferredSecuritySchemes("KeycloakAuth")
                     .AddAuthorizationCodeFlow("KeycloakAuth", flow =>
                     {
-                        flow.ClientId = keycloakOptions.ClientId;
-                        flow.ClientSecret = keycloakOptions.ClientSecret;
-                        flow.SelectedScopes = keycloakOptions.SelectedScopes;
+                        flow.ClientId = userClient.ClientId;
+                        flow.ClientSecret = userClient.ClientSecret;
+                        flow.SelectedScopes = identityProvider.SelectedScopes;
                         
-                        flow.Pkce = Enum.TryParse<Pkce>(keycloakOptions.Pkce, true, out var parsedPkce)
+                        flow.Pkce = Enum.TryParse<Pkce>(identityProvider.Pkce, true, out var parsedPkce)
                             ? parsedPkce
                             : Pkce.No;
                     });

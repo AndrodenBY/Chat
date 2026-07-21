@@ -10,27 +10,41 @@ public static class AuthorizationExtensions
 {
     public static void AddKeycloakAuth(this IServiceCollection services)
     {
-        services.AddOptions<KeycloakOptions>()
-            .BindConfiguration(KeycloakOptions.SectionName)
+        services.AddOptions<IdentityProviderOptions>()
+            .BindConfiguration(IdentityProviderOptions.SectionName)
             .ValidateDataAnnotations()
             .ValidateOnStart();
-
+        
+        services.AddOptions<IdentityProviderClientOptions>()
+            .BindConfiguration($"{IdentityProviderOptions.SectionName}:UserClient")
+            .ValidateDataAnnotations()
+            .ValidateOnStart(); 
+        
+        services.AddOptions<IdentityProviderClientOptions>()
+            .BindConfiguration($"{IdentityProviderOptions.SectionName}:AdminClient")
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+        
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer();
 
         services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
-            .Configure<IOptions<KeycloakOptions>>((options, keycloakConfig) =>
+            .Configure<IOptions<IdentityProviderOptions>>((options, identityProviderConfig) =>
             {
-                var keycloakOptions = keycloakConfig.Value;
+                var identityProviderOptions = identityProviderConfig.Value;
 
-                options.Authority = keycloakOptions.Authority;
-                options.Audience = keycloakOptions.ClientId;
-                options.MetadataAddress = keycloakOptions.MetadataAddress;
+                options.Authority = identityProviderOptions.Authority;
+                options.Audience = identityProviderOptions.Audience;
+                options.MetadataAddress = identityProviderOptions.MetadataAddress;
                 options.RequireHttpsMetadata = false;
 
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ValidIssuer = keycloakOptions.Issuer
+                    ValidateIssuer = true,
+                    ValidIssuer = identityProviderOptions.Issuer,
+                    
+                    ValidateAudience = true,
+                    ValidAudience = identityProviderOptions.Audience,
                 };
             });
 
