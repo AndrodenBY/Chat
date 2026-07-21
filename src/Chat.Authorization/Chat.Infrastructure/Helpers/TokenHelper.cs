@@ -58,3 +58,44 @@ public static class TokenHelper
             RefreshTokenExpiresIn = requestTime.AddSeconds(tokenResponse.ExpiresIn)
         };
     }
+
+    public static async Task<ErrorOr<string>> SendManagementTokenRequest(
+        HttpClient httpClient, 
+        string tokenEndpoint,
+        IdentityProviderClientOptions identityProviderClientOptions, 
+        CancellationToken cancellationToken)
+    {
+        var parameters = new Dictionary<string, string>
+        {
+            ["grant_type"] = "client_credentials",
+            ["client_id"] = identityProviderClientOptions.ClientId,
+            ["client_secret"] = identityProviderClientOptions.ClientSecret
+        };
+
+        var response = await httpClient.PostAsync(
+            tokenEndpoint,
+            new FormUrlEncodedContent(parameters),
+            cancellationToken
+        );
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return Error.Failure(
+                code: "Auth.AdminTokenFailed",
+                description: "Could not obtain administrative token"
+            );
+        }
+
+        var json = await response.Content.ReadFromJsonAsync<KeycloakTokenResponse>(cancellationToken);
+
+        if (json?.AccessToken is null)
+        {
+            return Error.Failure(
+                code: "Auth.NullResponse",
+                description: "Identity provider returned an empty response body"
+            );
+        }
+
+        return json.AccessToken;
+    }
+}
