@@ -1,3 +1,5 @@
+using Chat.Domain.ValueObjects;
+
 namespace Chat.Application.DTOs;
 
-public record LoginRequest(string Username, string Password);
+public record LoginRequest(Username Username, string Password);
