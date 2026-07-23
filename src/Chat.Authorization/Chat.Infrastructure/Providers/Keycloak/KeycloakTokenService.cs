@@ -16,7 +16,7 @@ public class KeycloakTokenService(
     IOptions<IdentityProviderOptions> identityProviderOptions,
     IMemoryCache cache)
 {
-    private readonly HttpClient _httpClient = clientFactory.CreateClient("IdentityProvider");
+    private readonly HttpClient _httpClient = clientFactory.CreateClient(nameof(KeycloakTokenService));
     private readonly IdentityProviderOptions _identityProviderOptions = identityProviderOptions.Value;
     private const string AdminTokenCacheKey = "keycloak_admin_token";
     
