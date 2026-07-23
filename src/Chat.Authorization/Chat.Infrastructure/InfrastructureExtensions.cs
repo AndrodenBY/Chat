@@ -7,6 +7,7 @@ public static class InfrastructureExtensions
 {
     public static void AddInfrastructure(this IServiceCollection services)
     {
-        services.AddKeycloakAuth();
+        services.AddIdentityProvider()
+            .AddKeycloakServices();
     }
 }

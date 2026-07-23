@@ -3,8 +3,9 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Chat.Domain.Contracts;
 using Chat.Domain.ValueObjects;
-using Chat.Infrastructure.DTOs;
 using Chat.Infrastructure.Options;
+using Chat.Infrastructure.Options.Keycloak;
+using Chat.Infrastructure.Providers.Keycloak.Models;
 using ErrorOr;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
@@ -13,11 +14,11 @@ namespace Chat.Infrastructure.Providers.Keycloak;
 
 public class KeycloakTokenService(
     IHttpClientFactory clientFactory, 
-    IOptions<IdentityProviderOptions> identityProviderOptions,
+    IOptions<KeycloakOptions> keycloakOptions,
     IMemoryCache cache)
 {
     private readonly HttpClient _httpClient = clientFactory.CreateClient(nameof(KeycloakTokenService));
-    private readonly IdentityProviderOptions _identityProviderOptions = identityProviderOptions.Value;
+    private readonly KeycloakOptions _keycloakOptions = keycloakOptions.Value;
     private const string AdminTokenCacheKey = "keycloak_admin_token";
     
     public async Task<ErrorOr<TokenResult>> ExchangeToken(Dictionary<string, string> parameters, CancellationToken cancellationToken)
@@ -25,7 +26,7 @@ public class KeycloakTokenService(
         var requestTime = DateTimeOffset.UtcNow;
 
         using var response = await _httpClient.PostAsync(
-            _identityProviderOptions.TokenEndpoint,
+            _keycloakOptions.TokenEndpoint,
             new FormUrlEncodedContent(parameters),
             cancellationToken
         );
@@ -89,7 +90,7 @@ public class KeycloakTokenService(
         };
         
         using var response = await _httpClient.PostAsync(
-            _identityProviderOptions.TokenEndpoint,
+            _keycloakOptions.TokenEndpoint,
             new FormUrlEncodedContent(parameters),
             cancellationToken);
 
@@ -118,7 +119,7 @@ public class KeycloakTokenService(
     public async Task<ErrorOr<Success>> RevokeToken(Dictionary<string, string> parameters, CancellationToken cancellationToken)
     {
         using var response = await _httpClient.PostAsync(
-            _identityProviderOptions.LogoutEndpoint,
+            _keycloakOptions.LogoutEndpoint,
             new FormUrlEncodedContent(parameters),
             cancellationToken
         );

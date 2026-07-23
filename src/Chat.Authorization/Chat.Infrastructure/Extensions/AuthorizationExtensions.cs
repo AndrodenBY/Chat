@@ -8,20 +8,10 @@ namespace Chat.Infrastructure.Extensions;
 
 public static class AuthorizationExtensions
 {
-    public static void AddKeycloakAuth(this IServiceCollection services)
+    public static IServiceCollection AddIdentityProvider(this IServiceCollection services)
     {
         services.AddOptions<IdentityProviderOptions>()
             .BindConfiguration(IdentityProviderOptions.SectionName)
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
-        
-        services.AddOptions<IdentityProviderClientOptions>()
-            .BindConfiguration($"{IdentityProviderOptions.SectionName}:UserClient")
-            .ValidateDataAnnotations()
-            .ValidateOnStart(); 
-        
-        services.AddOptions<IdentityProviderClientOptions>()
-            .BindConfiguration($"{IdentityProviderOptions.SectionName}:AdminClient")
             .ValidateDataAnnotations()
             .ValidateOnStart();
         
@@ -29,14 +19,14 @@ public static class AuthorizationExtensions
             .AddJwtBearer();
 
         services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
-            .Configure<IOptions<IdentityProviderOptions>>((options, identityProviderConfig) =>
+            .Configure<IOptions<IdentityProviderOptions>>((options, genericOptions) =>
             {
-                var identityProviderOptions = identityProviderConfig.Value;
+                var identityProviderOptions = genericOptions.Value;
 
                 options.Authority = identityProviderOptions.Authority;
                 options.Audience = identityProviderOptions.Audience;
                 options.MetadataAddress = identityProviderOptions.MetadataAddress;
-                options.RequireHttpsMetadata = false;
+                options.RequireHttpsMetadata = identityProviderOptions.RequireHttpsMetadata;
 
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
@@ -49,5 +39,7 @@ public static class AuthorizationExtensions
             });
 
         services.AddAuthorization();
+        
+        return services;
     }
 }

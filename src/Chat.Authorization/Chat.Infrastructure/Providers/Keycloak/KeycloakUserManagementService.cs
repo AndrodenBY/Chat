@@ -3,114 +3,105 @@ using System.Net.Http.Json;
 using Chat.Application.DTOs;
 using Chat.Application.Interfaces;
 using Chat.Domain.ValueObjects;
-using Chat.Infrastructure.DTOs;
-using Chat.Infrastructure.Options;
-using Chat.Infrastructure.Providers.Keycloak;
+using Chat.Infrastructure.Options.Keycloak;
+using Chat.Infrastructure.Providers.Keycloak.Models;
 using ErrorOr;
 using Microsoft.Extensions.Options;
 
-namespace Chat.Infrastructure.Services;
+namespace Chat.Infrastructure.Providers.Keycloak;
 
 public class KeycloakUserManagementService(
     IHttpClientFactory clientFactory,
     KeycloakTokenService tokenService,
-    IOptions<IdentityProviderOptions> identityProviderOptions,
-    IOptionsMonitor<IdentityProviderClientOptions> adminClientOptions) 
+    IOptions<KeycloakOptions> keycloakOptions) 
     : IUserManagementService
 {
     private readonly HttpClient _httpClient = clientFactory.CreateClient(nameof(KeycloakUserManagementService));
-    private readonly IdentityProviderOptions _identityProviderOptions = identityProviderOptions.Value;
-    private readonly IdentityProviderClientOptions _adminClientOptions = adminClientOptions.Get(IdentityProviderClientOptions.AdminClient);
+    private readonly KeycloakOptions _keycloakOptions = keycloakOptions.Value;
     
     public async Task<ErrorOr<UserDto>> Get(ExternalId externalId, CancellationToken cancellationToken)
     {
-        var tokenResult = await tokenService.GetAdminToken(_adminClientOptions, cancellationToken);
-        if (tokenResult.IsError)
+        var requestResult = await CreateAuthorizedRequest(
+            HttpMethod.Get,
+            $"{_keycloakOptions.ManagementApiEndpoint}/{externalId.Value}",
+            cancellationToken
+        );
+
+        if (requestResult.IsError)
         {
-            return tokenResult.Errors;
+            return requestResult.Errors;
         }
         
-        using var request = new HttpRequestMessage(HttpMethod.Get, $"{_identityProviderOptions.ManagementApiEndpoint}/{externalId.Value}");
-        tokenService.AuthorizeRequest(request, tokenResult.Value);
+        using var response = await _httpClient.SendAsync(requestResult.Value, cancellationToken);
         
-        using var response = await _httpClient.SendAsync(request, cancellationToken);
-
         if (response.StatusCode is HttpStatusCode.NotFound)
         {
-            return Error.NotFound("User.NotFound", "User with this id doesn't exist");
+            return Error.NotFound("User.NotFound", "User with this id doesn't exist.");
         }
 
         if (!response.IsSuccessStatusCode)
         {
-            return Error.Failure("User.Failed", "Failed to retrieve user details");
-        }
-
-        var user = await response.Content
-            .ReadFromJsonAsync<KeycloakUserRepresentation>(cancellationToken);
-
-        if (user is null)
-        {
-            return Error.Failure("User.NullData", "Identity provider returned empty user");
+            return Error.Failure("User.Failed", "Failed to retrieve user details.");
         }
         
-        if (!Username.TryCreate(user.Username, out var username, out var usernameError))
+        var user = await response.Content.ReadFromJsonAsync<KeycloakUserRepresentation>(cancellationToken);
+        if (user is null)
         {
-            return Error.Validation("User.InvalidUsername", usernameError ?? "Invalid username returned from provider");
+            return Error.Failure("User.NullData", "Identity provider returned an empty user payload.");
         }
+        
+        var validationResult = ValidateIdentity(user.Username, user.Email);
+        if (validationResult.IsError) return validationResult.Errors;
 
-        if (!Email.TryCreate(user.Email, out var email, out var emailError))
-        {
-            return Error.Validation("User.InvalidEmail", emailError ?? "Invalid email returned from provider");
-        }
+        var (username, email) = validationResult.Value;
 
         return new UserDto(
             externalId,
-            username!,
-            email!,
+            username,
+            email,
             user.Enabled
         );
     }
 
     public async Task<ErrorOr<string>> Create(UserCreateDto createDto, CancellationToken cancellationToken)
     {
-        if (!Username.TryCreate(createDto.Username.Value, out var username, out var usernameError))
+        var validationResult = ValidateIdentity(createDto.Username.Value, createDto.Email.Value);
+        if (validationResult.IsError)
         {
-            return Error.Validation("User.InvalidUsername", usernameError ?? "Invalid username");
+            return validationResult.Errors;
         }
-
-        if (!Email.TryCreate(createDto.Email.Value, out var email, out var emailError))
-        {
-            return Error.Validation("User.InvalidEmail", emailError ?? "Invalid email");
-        }
-
+        
         if (string.IsNullOrWhiteSpace(createDto.Password))
         {
             return Error.Validation("User.InvalidPassword", "Password cannot be empty");
         }
         
-        var tokenResult = await tokenService.GetAdminToken(_adminClientOptions, cancellationToken);
-        if (tokenResult.IsError)
-        {
-            return tokenResult.Errors;
-        }
+        var (username, email) = validationResult.Value;
+
+        var requestResult = await CreateAuthorizedRequest(
+            HttpMethod.Post,
+            _keycloakOptions.ManagementApiEndpoint,
+            cancellationToken
+        );
         
-        using var request = new HttpRequestMessage(HttpMethod.Post, _identityProviderOptions.ManagementApiEndpoint);
-        tokenService.AuthorizeRequest(request, tokenResult.Value);
-        request.Content = JsonContent.Create(new
+        if (requestResult.IsError)
         {
-            username = username!.Value,
-            email = email!.Value,
-            enabled = true,
-            credentials = new[]
-            {
-                new
-                {
-                    type = "password",
-                    value = createDto.Password,
-                    temporary = false
-                }
-            }
-        });
+            return requestResult.Errors;
+        }
+
+        using var request = requestResult.Value;
+        request.Content = JsonContent.Create(new KeycloakCreateUserRequest(
+            username.Value,
+            email.Value,
+            true,
+            [
+                new KeycloakCredentials(
+                    "password", 
+                    createDto.Password, 
+                    false
+                )
+            ]
+        ));
         
         using var response = await _httpClient.SendAsync(request, cancellationToken);
         
@@ -137,47 +128,47 @@ public class KeycloakUserManagementService(
 
     public async Task<ErrorOr<Success>> Update(ExternalId externalId, UserUpdateDto updateDto, CancellationToken cancellationToken)
     {
-        if (!Username.TryCreate(updateDto.Username.Value, out var username, out var usernameError))
+        var validationResult = ValidateIdentity(updateDto.Username.Value, updateDto.Email.Value);
+        if (validationResult.IsError)
         {
-            return Error.Validation("User.InvalidUsername", usernameError ?? "Invalid username");
+            return validationResult.Errors;
         }
 
-        if (!Email.TryCreate(updateDto.Email.Value, out var email, out var emailError))
+        var (username, email) = validationResult.Value;
+
+        var requestResult = await CreateAuthorizedRequest(
+            HttpMethod.Put, 
+            $"{_keycloakOptions.ManagementApiEndpoint}/{externalId.Value}", 
+            cancellationToken
+        );
+
+        if (requestResult.IsError)
         {
-            return Error.Validation("User.InvalidEmail", emailError ?? "Invalid email");
-        }
-        
-        var tokenResult = await tokenService.GetAdminToken(_adminClientOptions, cancellationToken);
-        if (tokenResult.IsError)
-        {
-            return tokenResult.Errors;
+            return requestResult.Errors;
         }
 
-        using var request = new HttpRequestMessage(HttpMethod.Put, $"{_identityProviderOptions.ManagementApiEndpoint}/{externalId.Value}");
-        tokenService.AuthorizeRequest(request, tokenResult.Value);
-        request.Content = JsonContent.Create(new
-        {
-            username = username!.Value,
-            email = email!.Value,
-            enabled = true
-        });
-        
+        using var request = requestResult.Value;
+        request.Content = JsonContent.Create(new KeycloakUpdateUserRequest(
+            username.Value,
+            email.Value,
+            true
+        ));
+
         using var response = await _httpClient.SendAsync(request, cancellationToken);
 
         if (response.StatusCode is HttpStatusCode.NotFound)
         {
-            return Error.NotFound(
-                code: "User.NotFound",
-                description: "User with this id doesn't exist"
-            );
+            return Error.NotFound("User.NotFound", "User with this id doesn't exist.");
+        }
+
+        if (response.StatusCode is HttpStatusCode.Conflict)
+        {
+            return Error.Conflict("User.AlreadyExists", "A user with this username or email already exists.");
         }
 
         if (!response.IsSuccessStatusCode)
         {
-            return Error.Failure(
-                code: "User.Failed",
-                description: "Failed to update user details"
-            );
+            return Error.Failure("User.Failed", "Failed to update user details.");
         }
 
         return Result.Success;
@@ -185,23 +176,28 @@ public class KeycloakUserManagementService(
 
     public async Task<ErrorOr<Success>> Delete(ExternalId externalId, CancellationToken cancellationToken)
     {
-        var tokenResult = await tokenService.GetAdminToken(_adminClientOptions, cancellationToken);
-        if (tokenResult.IsError)
+        var requestResult = await CreateAuthorizedRequest(
+            HttpMethod.Delete, 
+            $"{_keycloakOptions.ManagementApiEndpoint}/{externalId.Value}", 
+            cancellationToken
+        );
+
+        if (requestResult.IsError)
         {
-            return tokenResult.Errors;
+            return requestResult.Errors;
         }
-        
-        using var request = new HttpRequestMessage(HttpMethod.Delete, $"{_identityProviderOptions.ManagementApiEndpoint}/{externalId.Value}");
-        tokenService.AuthorizeRequest(request, tokenResult.Value);
-        
+
+        using var request = requestResult.Value;
         using var response = await _httpClient.SendAsync(request, cancellationToken);
+
+        if (response.StatusCode is HttpStatusCode.NotFound)
+        {
+            return Error.NotFound("User.NotFound", "User with this id doesn't exist.");
+        }
 
         if (!response.IsSuccessStatusCode)
         {
-            return Error.Failure(
-                code: "User.Failed",
-                description: "Failed to update user details"
-            );
+            return Error.Failure("User.Failed", "Failed to delete user."); // Fixed copy-paste error!
         }
 
         return Result.Success;
@@ -209,7 +205,7 @@ public class KeycloakUserManagementService(
     
     private async Task<ErrorOr<HttpRequestMessage>> CreateAuthorizedRequest(HttpMethod method, string endpoint, CancellationToken cancellationToken)
     {
-        var tokenResult = await tokenService.GetAdminToken(_adminClientOptions, cancellationToken);
+        var tokenResult = await tokenService.GetAdminToken(_keycloakOptions.AdminClient, cancellationToken);
         if (tokenResult.IsError)
         {
             return tokenResult.Errors;
