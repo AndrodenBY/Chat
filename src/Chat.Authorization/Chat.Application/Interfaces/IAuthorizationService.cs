@@ -1,5 +1,4 @@
 using ErrorOr;
-using Chat.Application.Contracts;
 using Chat.Application.DTOs;
 using Chat.Domain.Contracts;
 
