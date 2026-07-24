@@ -1,0 +1,181 @@
+using System.Net;
+using System.Net.Http.Json;
+using Chat.Domain.Interfaces;
+using Chat.Domain.Models;
+using Chat.Domain.ValueObjects;
+using Chat.Infrastructure.Options.Keycloak;
+using Chat.Infrastructure.Providers.Keycloak.Models;
+using Microsoft.Extensions.Options;
+
+namespace Chat.Infrastructure.Providers.Keycloak;
+
+public class KeycloakUserManagementService(
+    IHttpClientFactory clientFactory,
+    KeycloakTokenService tokenService,
+    IOptions<KeycloakOptions> keycloakOptions) 
+    : IIdentityUserProvider
+{
+    private readonly HttpClient _httpClient = clientFactory.CreateClient(nameof(KeycloakUserManagementService));
+    private readonly KeycloakOptions _keycloakOptions = keycloakOptions.Value;
+    
+    public async Task<IdentityUserData?> Get(ExternalId externalId, CancellationToken cancellationToken)
+    {
+        var request = await CreateAuthorizedRequest(
+            HttpMethod.Get,
+            $"{_keycloakOptions.ManagementApiEndpoint}/{externalId.Value}",
+            cancellationToken);
+
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        var user = await response.Content.ReadFromJsonAsync<KeycloakUserRepresentation>(cancellationToken);
+
+        if (user is null)
+        {
+            throw new InvalidOperationException("Keycloak returned an empty user payload.");
+        }
+
+        if (!Username.TryCreate(user.Username, out var username, out var usernameError))
+        {
+            throw new InvalidOperationException(usernameError ?? "Keycloak returned an invalid username.");
+        }
+
+        if (!Email.TryCreate(user.Email, out var email, out var emailError))
+        {
+            throw new InvalidOperationException(emailError ?? "Keycloak returned an invalid email.");
+        }
+
+        return new IdentityUserData(
+            externalId,
+            username!,
+            email!,
+            user.Enabled
+        );
+    }
+
+    public async Task<ExternalId> Create(Username username, Email email, string password, CancellationToken cancellationToken)
+    {
+        var request = await CreateAuthorizedRequest(
+            HttpMethod.Post,
+            _keycloakOptions.ManagementApiEndpoint,
+            cancellationToken
+        );
+
+        request.Content = JsonContent.Create(
+            new KeycloakCreateUserRequest(
+                username.Value,
+                email.Value,
+                true,
+                [
+                    new KeycloakCredentials(
+                        "password",
+                        password,
+                        false)
+                ]));
+
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
+
+        if (response.StatusCode == HttpStatusCode.Conflict)
+        {
+            throw new InvalidOperationException("A Keycloak user with this username or email already exists.");
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        var location = response.Headers.Location;
+
+        var userId = location?
+            .Segments
+            .LastOrDefault()
+            ?.Trim('/');
+
+        return !ExternalId.TryCreate(userId, out var externalId, out var error) 
+            ? throw new InvalidOperationException(error ?? "Keycloak returned an invalid user ID.")
+            : externalId!;
+    }
+
+    public async Task<OperationResult> Update(ExternalId externalId, Username username, Email email, CancellationToken cancellationToken)
+    {
+        var request = await CreateAuthorizedRequest(
+            HttpMethod.Put,
+            $"{_keycloakOptions.ManagementApiEndpoint}/{externalId.Value}",
+            cancellationToken
+        );
+
+        request.Content = JsonContent.Create(
+            new KeycloakUpdateUserRequest(
+                username.Value,
+                email.Value,
+                true)
+        );
+
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
+
+        return response.StatusCode switch
+        {
+            HttpStatusCode.Conflict => new OperationResult(
+                OperationStatus.Conflict,
+                "A user with this username or email already exists."),
+
+            _ when response.IsSuccessStatusCode => new OperationResult(
+                OperationStatus.Success),
+
+            _ => new OperationResult(
+                OperationStatus.Failure,
+                $"Keycloak update failed with status code {response.StatusCode}.")
+        };
+    }
+
+    public async Task<OperationResult> Delete(ExternalId externalId, CancellationToken cancellationToken)
+    {
+        var request = await CreateAuthorizedRequest(
+            HttpMethod.Delete, 
+            $"{_keycloakOptions.ManagementApiEndpoint}/{externalId.Value}", 
+            cancellationToken
+        );
+        
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
+
+        return response.StatusCode switch
+        {
+            HttpStatusCode.NotFound => new OperationResult(
+                OperationStatus.NotFound,
+                "User with this id doesn't exist."),
+
+            _ when response.IsSuccessStatusCode => new OperationResult(
+                OperationStatus.Success),
+
+            _ => new OperationResult(
+                OperationStatus.Failure,
+                $"Keycloak update failed with status code {response.StatusCode}.")
+        };
+    }
+    
+    private async Task<HttpRequestMessage> CreateAuthorizedRequest(HttpMethod method, string endpoint, CancellationToken cancellationToken)
+    {
+        var tokenResult = await tokenService.GetAdminToken(
+            _keycloakOptions.AdminClient,
+            cancellationToken
+        );
+
+        if (tokenResult.IsError)
+        {
+            throw new InvalidOperationException("Could not acquire Keycloak admin token.");
+        }
+
+        var request = new HttpRequestMessage(method, endpoint);
+
+        tokenService.AuthorizeRequest(
+            request,
+            tokenResult.Value
+        );
+
+        return request;
+    }
+}

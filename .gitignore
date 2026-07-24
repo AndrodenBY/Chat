@@ -56,3 +56,5 @@ artifacts/
 
 # Publish output
 publish/
+
+.env
