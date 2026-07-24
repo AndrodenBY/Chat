@@ -1,3 +1,4 @@
+using Chat.Api.Endpoints;
 using Chat.Application;
 using Chat.Infrastructure;
 using Chat.Infrastructure.Options;
@@ -9,9 +10,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddUserSecrets<Program>();
 builder.Configuration.AddEnvironmentVariables();
+
 builder.Services.AddOpenApi();
+
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure();
+
 builder.Services.AddOptions<ScalarOptions>()
     .Configure<IOptions<IdentityProviderOptions>, IOptions<KeycloakOptions>>(
         (options, identityProviderConfig, keycloakConfig) =>
@@ -50,5 +54,8 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapAuthEndpoints();
+app.MapUserManagementEndpoints();
 
 app.Run();
