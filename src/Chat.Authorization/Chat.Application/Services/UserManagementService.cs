@@ -18,9 +18,7 @@ public class UserManagementService(IIdentityUserProvider identityUserProvider) :
             return validationResult.Errors;
         }
 
-        var userData = await identityUserProvider.Get(
-            validationResult.Value,
-            cancellationToken);
+        var userData = await identityUserProvider.Get(validationResult.Value, cancellationToken);
 
         if (userData is null)
         {
@@ -73,9 +71,7 @@ public class UserManagementService(IIdentityUserProvider identityUserProvider) :
             return idValidationResult.Errors;
         }
 
-        var validationResult = ValidateIdentity(
-            updateDto.Username,
-            updateDto.Email);
+        var validationResult = ValidateIdentity(updateDto.Username, updateDto.Email);
 
         if (validationResult.IsError)
         {
@@ -88,7 +84,8 @@ public class UserManagementService(IIdentityUserProvider identityUserProvider) :
             idValidationResult.Value,
             validUsername,
             validEmail,
-            cancellationToken);
+            cancellationToken
+        );
 
         return result.Status switch
         {
