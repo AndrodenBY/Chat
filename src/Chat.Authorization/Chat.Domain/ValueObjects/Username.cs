@@ -6,7 +6,7 @@ public sealed partial record Username
 {
     public string Value { get; }
     
-    [GeneratedRegex(@"^[a-zA-Z0-9_-]+$")]
+    [GeneratedRegex("^[a-zA-Z0-9_-]+$")]
     private static partial Regex UsernameRegex();
     
     private Username(string value) => Value = value;
