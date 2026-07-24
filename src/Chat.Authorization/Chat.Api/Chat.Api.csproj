@@ -4,7 +4,8 @@
         <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <RootNamespace>Chat.Authorization</RootNamespace>
+        <RootNamespace>Chat.Api</RootNamespace>
+        <AssemblyName>Chat.Api</AssemblyName>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
       <UserSecretsId>b8fd91b0-513c-4512-a8c4-5feff02d95da</UserSecretsId>
   </PropertyGroup>
