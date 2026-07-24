@@ -21,7 +21,7 @@ public static class KeycloakServiceExtensions
         
         services.AddSingleton<KeycloakTokenService>()
             .AddScoped<IIdentityProvider, KeycloakIdentityProvider>()
-            .AddScoped<IUserManagementService, KeycloakUserManagementService>();
+            .AddScoped<IIdentityUserProvider, KeycloakUserManagementService>();
 
         return services;
     }
