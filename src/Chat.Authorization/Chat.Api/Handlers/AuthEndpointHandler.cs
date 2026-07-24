@@ -1,35 +1,52 @@
 using Chat.Api.Contracts;
-using Chat.Domain.Interfaces;
-using Chat.Domain.ValueObjects;
+using Chat.Api.Extensions;
+using Chat.Application.Interfaces;
+
 using Microsoft.AspNetCore.Mvc;
 
 namespace Chat.Api.Handlers;
 
 public static class AuthEndpointHandler
 {
-    public static async Task Login(
+    public static async Task<IResult> Login(
         [FromBody] LoginParameters request,
-        IIdentityProvider provider,
+        IAuthenticationService authService,
         CancellationToken cancellationToken)
     {
-        await provider.Login(request.Username, request.Password, cancellationToken);
+        var result = await authService.Login(
+            request.Username,
+            request.Password,
+            cancellationToken);
+
+        return result.Match(
+            Results.Ok,
+            errors => errors.ToProblem()
+        );
     }
 
-    public static async Task RefreshToken(
-        [FromBody] RefreshTokenParameters request,
-        IIdentityProvider provider,
+    public static async Task<IResult> RefreshToken(
+        [FromBody] string refreshToken,
+        IAuthenticationService authService,
         CancellationToken cancellationToken)
     {
-        var refreshToken = new RefreshToken(request.RefreshToken);
-        await provider.RefreshToken(refreshToken, cancellationToken);
+        var result = await authService.RefreshToken(refreshToken, cancellationToken);
+
+        return result.Match(
+            Results.Ok,
+            errors => errors.ToProblem()
+        );
     }
 
-    public static async Task Logout(
-        [FromBody] LogoutParameters request,
-        IIdentityProvider provider,
+    public static async Task<IResult> Logout(
+        [FromBody] string refreshToken,
+        IAuthenticationService authService,
         CancellationToken cancellationToken)
     {
-        var refreshToken = new RefreshToken(request.RefreshToken);
-        await provider.Logout(refreshToken, cancellationToken);
+        var result = await authService.Logout(refreshToken, cancellationToken);
+
+        return result.Match(
+            _ => Results.NoContent(),
+            errors => errors.ToProblem()
+        );
     }
 }
