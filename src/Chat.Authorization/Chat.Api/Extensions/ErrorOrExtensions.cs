@@ -4,31 +4,49 @@ namespace Chat.Api.Extensions;
 
 public static class ErrorOrExtensions
 {
-    public static IResult ToApiResult<T>(
-        this ErrorOr<T> result)
+    public static IResult ToApiResult<T>(this ErrorOr<T> result)
     {
         return result.Match(
-            value => Results.Ok(value),
-            errors => errors.ToProblem());
+            onValue: Results.Ok,
+            onError: errors => errors.ToProblem()
+        );
     }
 
-    public static IResult ToProblem(
-        this List<Error> errors)
+    public static IResult ToProblem(this List<Error> errors)
     {
-        var error = errors[0];
-
-        var statusCode = error.Type switch
+        if (errors.Count == 0)
         {
-            ErrorType.Validation => StatusCodes.Status400BadRequest,
-            ErrorType.Unauthorized => StatusCodes.Status401Unauthorized,
-            ErrorType.NotFound => StatusCodes.Status404NotFound,
-            ErrorType.Conflict => StatusCodes.Status409Conflict,
-            _ => StatusCodes.Status500InternalServerError
-        };
+            return Results.Problem();
+        }
 
+        if (errors.All(error => error.Type == ErrorType.Validation))
+        {
+            var errorMap = errors
+                .GroupBy(error => error.Code)
+                .ToDictionary(
+                    grouping => grouping.Key,
+                    grouping => grouping.Select(error => error.Description).ToArray()
+                );
+
+            return Results.ValidationProblem(errorMap);
+        }
+        
+        var firstError = errors[0];
+        
         return Results.Problem(
-            statusCode: statusCode,
-            title: error.Code,
-            detail: error.Description);
+            statusCode: firstError.Type.ToStatusCode(),
+            title: firstError.Code,
+            detail: firstError.Description
+        );
     }
+    
+    public static int ToStatusCode(this ErrorType errorType) => errorType switch
+    {
+        ErrorType.Validation => StatusCodes.Status400BadRequest,
+        ErrorType.Unauthorized => StatusCodes.Status401Unauthorized,
+        ErrorType.Forbidden => StatusCodes.Status403Forbidden,
+        ErrorType.NotFound => StatusCodes.Status404NotFound,
+        ErrorType.Conflict => StatusCodes.Status409Conflict,
+        _ => StatusCodes.Status500InternalServerError
+    };
 }
