@@ -18,10 +18,7 @@ public static class AuthEndpointHandler
             request.Password,
             cancellationToken);
 
-        return result.Match(
-            Results.Ok,
-            errors => errors.ToProblem()
-        );
+        return result.ToApiResult();
     }
 
     public static async Task<IResult> RefreshToken(
@@ -31,10 +28,7 @@ public static class AuthEndpointHandler
     {
         var result = await authService.RefreshToken(refreshToken, cancellationToken);
 
-        return result.Match(
-            Results.Ok,
-            errors => errors.ToProblem()
-        );
+        return result.ToApiResult();
     }
 
     public static async Task<IResult> Logout(

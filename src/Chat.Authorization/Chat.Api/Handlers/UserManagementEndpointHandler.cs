@@ -14,10 +14,7 @@ public static class UserManagementEndpointHandler
     {
         var result = await userManagementService.Get(externalId, cancellationToken);
 
-        return result.Match(
-            Results.Ok,
-            errors => errors.ToProblem()
-        );
+        return result.ToApiResult();
     }
 
     public static async Task<IResult> Create(
