@@ -132,7 +132,7 @@ public class UserManagementService(IIdentityUserProvider identityUserProvider) :
             OperationStatus.Failure =>
                 Error.Failure(
                     "User.Failed",
-                    result.ErrorMessage ?? "Failed to update user."),
+                    result.ErrorMessage ?? "Failed to delete user."),
 
             _ =>
                 Error.Failure(
