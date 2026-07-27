@@ -38,6 +38,9 @@ public static class AuthEndpointHandler
     {
         var result = await authService.Logout(refreshToken, cancellationToken);
 
-        return result.ToApiResult();
+        return result.Match(
+            _ => Results.NoContent(),
+            errors => errors.ToProblem()
+        );
     }
 }
