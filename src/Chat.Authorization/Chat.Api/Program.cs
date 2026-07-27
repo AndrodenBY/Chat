@@ -1,4 +1,5 @@
 using Chat.Api.Endpoints;
+using Chat.Api.Middleware;
 using Chat.Application;
 using Chat.Infrastructure;
 using Chat.Infrastructure.Options;
@@ -12,6 +13,9 @@ builder.Configuration.AddUserSecrets<Program>();
 builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddOpenApi();
+
+builder.Services.AddExceptionHandler<ExceptionHandlingMiddleware>();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure();
@@ -50,6 +54,8 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
+app.UseExceptionHandler();
+    
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
