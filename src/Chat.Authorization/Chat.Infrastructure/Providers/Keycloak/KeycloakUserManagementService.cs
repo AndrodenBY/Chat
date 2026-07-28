@@ -3,29 +3,17 @@ using System.Net.Http.Json;
 using Chat.Domain.Interfaces;
 using Chat.Domain.Models;
 using Chat.Domain.ValueObjects;
-using Chat.Infrastructure.Options.Keycloak;
 using Chat.Infrastructure.Providers.Keycloak.Models;
-using Microsoft.Extensions.Options;
 
 namespace Chat.Infrastructure.Providers.Keycloak;
 
-public class KeycloakUserManagementService(
-    IHttpClientFactory clientFactory,
-    KeycloakTokenService tokenService,
-    IOptions<KeycloakOptions> keycloakOptions) 
-    : IIdentityUserProvider
+public class KeycloakUserManagementService(IHttpClientFactory clientFactory) : IIdentityUserProvider
 {
     private readonly HttpClient _httpClient = clientFactory.CreateClient(nameof(KeycloakUserManagementService));
-    private readonly KeycloakOptions _keycloakOptions = keycloakOptions.Value;
     
     public async Task<IdentityUserData?> Get(ExternalId externalId, CancellationToken cancellationToken)
     {
-        var request = await CreateAuthorizedRequest(
-            HttpMethod.Get,
-            $"{_keycloakOptions.ManagementApiEndpoint}/{externalId.Value}",
-            cancellationToken);
-
-        using var response = await _httpClient.SendAsync(request, cancellationToken);
+        using var response = await _httpClient.GetAsync(externalId.Value, cancellationToken);
 
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
@@ -61,13 +49,7 @@ public class KeycloakUserManagementService(
 
     public async Task<ExternalId> Create(Username username, Email email, string password, CancellationToken cancellationToken)
     {
-        var request = await CreateAuthorizedRequest(
-            HttpMethod.Post,
-            _keycloakOptions.ManagementApiEndpoint,
-            cancellationToken
-        );
-
-        request.Content = JsonContent.Create(
+        var payload = JsonContent.Create(
             new KeycloakCreateUserRequest(
                 username.Value,
                 email.Value,
@@ -79,7 +61,7 @@ public class KeycloakUserManagementService(
                         false)
                 ]));
 
-        using var response = await _httpClient.SendAsync(request, cancellationToken);
+        using var response = await _httpClient.PostAsJsonAsync("", payload, cancellationToken);
 
         if (response.StatusCode == HttpStatusCode.Conflict)
         {
@@ -102,20 +84,14 @@ public class KeycloakUserManagementService(
 
     public async Task<OperationResult> Update(ExternalId externalId, Username username, Email email, CancellationToken cancellationToken)
     {
-        var request = await CreateAuthorizedRequest(
-            HttpMethod.Put,
-            $"{_keycloakOptions.ManagementApiEndpoint}/{externalId.Value}",
-            cancellationToken
-        );
-
-        request.Content = JsonContent.Create(
+        var payload = JsonContent.Create(
             new KeycloakUpdateUserRequest(
                 username.Value,
                 email.Value,
                 true)
         );
 
-        using var response = await _httpClient.SendAsync(request, cancellationToken);
+        using var response = await _httpClient.PutAsJsonAsync("", payload, cancellationToken);
 
         return response.StatusCode switch
         {
@@ -134,13 +110,7 @@ public class KeycloakUserManagementService(
 
     public async Task<OperationResult> Delete(ExternalId externalId, CancellationToken cancellationToken)
     {
-        var request = await CreateAuthorizedRequest(
-            HttpMethod.Delete, 
-            $"{_keycloakOptions.ManagementApiEndpoint}/{externalId.Value}", 
-            cancellationToken
-        );
-        
-        using var response = await _httpClient.SendAsync(request, cancellationToken);
+        using var response = await _httpClient.DeleteAsync(externalId.Value, cancellationToken);
 
         return response.StatusCode switch
         {
@@ -155,27 +125,5 @@ public class KeycloakUserManagementService(
                 OperationStatus.Failure,
                 $"Keycloak update failed with status code {response.StatusCode}.")
         };
-    }
-    
-    private async Task<HttpRequestMessage> CreateAuthorizedRequest(HttpMethod method, string endpoint, CancellationToken cancellationToken)
-    {
-        var tokenResult = await tokenService.GetAdminToken(
-            _keycloakOptions.AdminClient,
-            cancellationToken
-        );
-
-        if (tokenResult.IsError)
-        {
-            throw new InvalidOperationException("Could not acquire Keycloak admin token.");
-        }
-
-        var request = new HttpRequestMessage(method, endpoint);
-
-        tokenService.AuthorizeRequest(
-            request,
-            tokenResult.Value
-        );
-
-        return request;
     }
 }
