@@ -13,11 +13,10 @@ using Microsoft.Extensions.Options;
 namespace Chat.Infrastructure.Providers.Keycloak;
 
 public class KeycloakTokenService(
-    IHttpClientFactory clientFactory, 
+    HttpClient httpClient, 
     IOptions<KeycloakOptions> keycloakOptions,
     IMemoryCache cache)
 {
-    private readonly HttpClient _httpClient = clientFactory.CreateClient(nameof(KeycloakTokenService));
     private readonly KeycloakOptions _keycloakOptions = keycloakOptions.Value;
     private const string AdminTokenCacheKey = "keycloak_admin_token";
     
@@ -25,7 +24,7 @@ public class KeycloakTokenService(
     {
         var requestTime = DateTimeOffset.UtcNow;
 
-        using var response = await _httpClient.PostAsync(
+        using var response = await httpClient.PostAsync(
             _keycloakOptions.TokenEndpoint,
             new FormUrlEncodedContent(parameters),
             cancellationToken
@@ -89,7 +88,7 @@ public class KeycloakTokenService(
             ["client_secret"] = adminClientOptions.ClientSecret
         };
         
-        using var response = await _httpClient.PostAsync(
+        using var response = await httpClient.PostAsync(
             _keycloakOptions.TokenEndpoint,
             new FormUrlEncodedContent(parameters),
             cancellationToken);
@@ -118,7 +117,7 @@ public class KeycloakTokenService(
     
     public async Task<ErrorOr<Success>> RevokeToken(Dictionary<string, string> parameters, CancellationToken cancellationToken)
     {
-        using var response = await _httpClient.PostAsync(
+        using var response = await httpClient.PostAsync(
             _keycloakOptions.LogoutEndpoint,
             new FormUrlEncodedContent(parameters),
             cancellationToken

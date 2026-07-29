@@ -7,13 +7,11 @@ using Chat.Infrastructure.Providers.Keycloak.Models;
 
 namespace Chat.Infrastructure.Providers.Keycloak;
 
-public class KeycloakUserManagementService(IHttpClientFactory clientFactory) : IIdentityUserProvider
+public class KeycloakUserManagementService(HttpClient httpClient) : IIdentityUserProvider
 {
-    private readonly HttpClient _httpClient = clientFactory.CreateClient(nameof(KeycloakUserManagementService));
-    
     public async Task<IdentityUserData?> Get(ExternalId externalId, CancellationToken cancellationToken)
     {
-        using var response = await _httpClient.GetAsync(externalId.Value, cancellationToken);
+        using var response = await httpClient.GetAsync(externalId.Value, cancellationToken);
 
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
@@ -49,8 +47,7 @@ public class KeycloakUserManagementService(IHttpClientFactory clientFactory) : I
 
     public async Task<ExternalId> Create(Username username, Email email, string password, CancellationToken cancellationToken)
     {
-        var payload = JsonContent.Create(
-            new KeycloakCreateUserRequest(
+        var payload = new KeycloakCreateUserRequest(
                 username.Value,
                 email.Value,
                 true,
@@ -59,9 +56,9 @@ public class KeycloakUserManagementService(IHttpClientFactory clientFactory) : I
                         "password",
                         password,
                         false)
-                ]));
+                ]);
 
-        using var response = await _httpClient.PostAsJsonAsync("", payload, cancellationToken);
+        using var response = await httpClient.PostAsJsonAsync("", payload, cancellationToken);
 
         if (response.StatusCode == HttpStatusCode.Conflict)
         {
@@ -73,9 +70,9 @@ public class KeycloakUserManagementService(IHttpClientFactory clientFactory) : I
         var location = response.Headers.Location;
 
         var userId = location?
-            .Segments
-            .LastOrDefault()
-            ?.Trim('/');
+            .AbsolutePath
+            .Split('/', StringSplitOptions.RemoveEmptyEntries)
+            .LastOrDefault();
 
         return !ExternalId.TryCreate(userId, out var externalId, out var error) 
             ? throw new InvalidOperationException(error ?? "Keycloak returned an invalid user ID.")
@@ -84,14 +81,14 @@ public class KeycloakUserManagementService(IHttpClientFactory clientFactory) : I
 
     public async Task<OperationResult> Update(ExternalId externalId, Username username, Email email, CancellationToken cancellationToken)
     {
-        var payload = JsonContent.Create(
+        var payload =
             new KeycloakUpdateUserRequest(
                 username.Value,
                 email.Value,
-                true)
+                true
         );
 
-        using var response = await _httpClient.PutAsJsonAsync("", payload, cancellationToken);
+        using var response = await httpClient.PutAsJsonAsync(externalId.Value, payload, cancellationToken);
 
         return response.StatusCode switch
         {
@@ -110,7 +107,7 @@ public class KeycloakUserManagementService(IHttpClientFactory clientFactory) : I
 
     public async Task<OperationResult> Delete(ExternalId externalId, CancellationToken cancellationToken)
     {
-        using var response = await _httpClient.DeleteAsync(externalId.Value, cancellationToken);
+        using var response = await httpClient.DeleteAsync(externalId.Value, cancellationToken);
 
         return response.StatusCode switch
         {
@@ -123,7 +120,7 @@ public class KeycloakUserManagementService(IHttpClientFactory clientFactory) : I
 
             _ => new OperationResult(
                 OperationStatus.Failure,
-                $"Keycloak update failed with status code {response.StatusCode}.")
+                $"Keycloak delete failed with status code {response.StatusCode}.")
         };
     }
 }
