@@ -1,11 +1,11 @@
 using Chat.Api.Endpoints;
 using Chat.Api.ErrorHandling;
+using Chat.Api.Extensions;
 using Chat.Api.Grpc;
 using Chat.Application;
 using Chat.Infrastructure;
 using Chat.Infrastructure.Options;
 using Chat.Infrastructure.Options.Keycloak;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Options;
 using Scalar.AspNetCore;
 
@@ -14,19 +14,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddUserSecrets<Program>();
 builder.Configuration.AddEnvironmentVariables();
 
-builder.WebHost.ConfigureKestrel(options =>
-{
-    options.ListenAnyIP(7077, listenOptions =>
-    {
-        listenOptions.UseHttps();
-        listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
-    });
-    
-    options.ListenAnyIP(5236, listenOptions =>
-    {
-        listenOptions.Protocols = HttpProtocols.Http2;
-    });
-});
+builder.Services.AddEndpointOptions();
+builder.WebHost.ConfigureChatKestrel();
 
 builder.Services.AddOpenApi();
 
