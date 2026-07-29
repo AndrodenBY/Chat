@@ -2,7 +2,7 @@ using Chat.Domain.ValueObjects;
 
 namespace Chat.Domain.Contracts;
 
-public sealed record TokenResult(
+public sealed record TokenResponse(
     AccessToken AccessToken,
     RefreshToken RefreshToken,
     DateTimeOffset AccessTokenExpiresAt,

@@ -10,10 +10,10 @@ public static class AuthEndpointHandler
 {
     public static async Task<IResult> Login(
         [FromBody] LoginParameters request,
-        IAuthenticationService authService,
+        IAuthenticationManager authManager,
         CancellationToken cancellationToken)
     {
-        var result = await authService.Login(
+        var result = await authManager.Login(
             request.Username,
             request.Password,
             cancellationToken);
@@ -23,20 +23,20 @@ public static class AuthEndpointHandler
 
     public static async Task<IResult> RefreshToken(
         [FromBody] string refreshToken,
-        IAuthenticationService authService,
+        IAuthenticationManager authManager,
         CancellationToken cancellationToken)
     {
-        var result = await authService.RefreshToken(refreshToken, cancellationToken);
+        var result = await authManager.RefreshToken(refreshToken, cancellationToken);
 
         return result.ToApiResult();
     }
 
     public static async Task<IResult> Logout(
         [FromBody] string refreshToken,
-        IAuthenticationService authService,
+        IAuthenticationManager authManager,
         CancellationToken cancellationToken)
     {
-        var result = await authService.Logout(refreshToken, cancellationToken);
+        var result = await authManager.Logout(refreshToken, cancellationToken);
 
         return result.Match(
             _ => Results.NoContent(),

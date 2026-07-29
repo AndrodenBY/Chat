@@ -13,7 +13,7 @@ public class KeycloakIdentityProvider(
 {
     private readonly IdentityProviderClientOptions _userClientOptions = clientOptions.Get(IdentityProviderClientOptions.UserClient);  
     
-    public async Task<TokenResult> Login(Username username, string password, CancellationToken cancellationToken)
+    public async Task<TokenResponse> Login(Username username, string password, CancellationToken cancellationToken)
     {
         var parameters = new Dictionary<string, string>
         {
@@ -32,7 +32,7 @@ public class KeycloakIdentityProvider(
         );
     }
 
-    public async Task<TokenResult> RefreshToken(RefreshToken refreshToken, CancellationToken cancellationToken)
+    public async Task<TokenResponse> RefreshToken(RefreshToken refreshToken, CancellationToken cancellationToken)
     {
         var parameters = new Dictionary<string, string>
         {

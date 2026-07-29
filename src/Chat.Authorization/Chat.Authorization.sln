@@ -14,6 +14,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\..\.env = ..\..\.env
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chat.Grpc", "Chat.Grpc\Chat.Grpc.csproj", "{66E98B5C-8B2F-4149-AD33-532D672FDBC8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -72,6 +74,18 @@ Global
 		{AD8D4F45-689C-4D82-B0A0-076C33B6E0A6}.Release|x64.Build.0 = Release|Any CPU
 		{AD8D4F45-689C-4D82-B0A0-076C33B6E0A6}.Release|x86.ActiveCfg = Release|Any CPU
 		{AD8D4F45-689C-4D82-B0A0-076C33B6E0A6}.Release|x86.Build.0 = Release|Any CPU
+		{66E98B5C-8B2F-4149-AD33-532D672FDBC8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66E98B5C-8B2F-4149-AD33-532D672FDBC8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66E98B5C-8B2F-4149-AD33-532D672FDBC8}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{66E98B5C-8B2F-4149-AD33-532D672FDBC8}.Debug|x64.Build.0 = Debug|Any CPU
+		{66E98B5C-8B2F-4149-AD33-532D672FDBC8}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{66E98B5C-8B2F-4149-AD33-532D672FDBC8}.Debug|x86.Build.0 = Debug|Any CPU
+		{66E98B5C-8B2F-4149-AD33-532D672FDBC8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66E98B5C-8B2F-4149-AD33-532D672FDBC8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66E98B5C-8B2F-4149-AD33-532D672FDBC8}.Release|x64.ActiveCfg = Release|Any CPU
+		{66E98B5C-8B2F-4149-AD33-532D672FDBC8}.Release|x64.Build.0 = Release|Any CPU
+		{66E98B5C-8B2F-4149-AD33-532D672FDBC8}.Release|x86.ActiveCfg = Release|Any CPU
+		{66E98B5C-8B2F-4149-AD33-532D672FDBC8}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
