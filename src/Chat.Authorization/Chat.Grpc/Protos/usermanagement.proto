@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+option csharp_namespace = "Chat.Grpc";
+package chat.usermanagement;
+
+service UserManagementService{
+  rpc Get (GetRequest) returns (UserResponse);
+  rpc Create (CreateRequest) returns (CreateResponse);
+  rpc Update (UpdateRequest) returns (UpdateResponse);
+  rpc Delete (DeleteRequest) returns (DeleteResponse);
+}
+
+message GetRequest {
+  string user_id = 1;
+}
+
+message UserResponse {
+  string id = 1;
+  string username = 2;
+  string email = 3;
+  bool is_enabled = 4;
+}
+
+message CreateRequest {
+  string username = 1;
+  string email = 2;
+  string password = 3;
+}
+
+message CreateResponse {
+  string user_id = 1;
+}
+
+message UpdateRequest {
+  string user_id = 1;
+  string username = 2;
+  string email = 3;
+}
+
+message UpdateResponse {
+  bool success = 1;
+}
+
+message DeleteRequest {
+  string user_id = 1;
+}
+
+message DeleteResponse {
+  bool success = 1;
+}
+

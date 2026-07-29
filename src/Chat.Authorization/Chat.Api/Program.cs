@@ -1,5 +1,7 @@
 using Chat.Api.Endpoints;
-using Chat.Api.Middleware;
+using Chat.Api.ErrorHandling;
+using Chat.Api.Extensions;
+using Chat.Api.Grpc;
 using Chat.Application;
 using Chat.Infrastructure;
 using Chat.Infrastructure.Options;
@@ -12,6 +14,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddUserSecrets<Program>();
 builder.Configuration.AddEnvironmentVariables();
 
+builder.Services.AddEndpointOptions();
+builder.WebHost.ConfigureChatKestrel();
+
 builder.Services.AddOpenApi();
 
 builder.Services.AddExceptionHandler<ExceptionHandlingMiddleware>();
@@ -19,6 +24,11 @@ builder.Services.AddProblemDetails();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure();
+
+builder.Services.AddGrpc(options =>
+{
+    options.Interceptors.Add<ErrorInterceptor>();
+});
 
 builder.Services.AddOptions<ScalarOptions>()
     .Configure<IOptions<IdentityProviderOptions>, IOptions<KeycloakOptions>>(
@@ -55,13 +65,13 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseExceptionHandler();
-    
-app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapAuthEndpoints();
 app.MapUserManagementEndpoints();
+app.MapGrpcService<GrpcAuthManager>();
+app.MapGrpcService<GrpcUserManagementService>();
 
 app.Run();

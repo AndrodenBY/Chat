@@ -10,19 +10,19 @@ public static class AuthEndpoints
         var group = endpoints.MapGroup("/api/auth");
 
         group.MapPost("/login", AuthEndpointHandler.Login)
-            .Produces<TokenResult>(StatusCodes.Status200OK)
+            .Produces<TokenResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .AllowAnonymous();
         
         group.MapPost("/refresh-token", AuthEndpointHandler.RefreshToken)
-            .Produces<TokenResult>(StatusCodes.Status200OK)
+            .Produces<TokenResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .AllowAnonymous();
         
         group.MapPost("/logout", AuthEndpointHandler.Logout)
-            .Produces<TokenResult>(StatusCodes.Status200OK)
+            .Produces<TokenResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .RequireAuthorization();

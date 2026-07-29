@@ -6,9 +6,9 @@ using ErrorOr;
 
 namespace Chat.Application.Services;
 
-public class AuthService(IIdentityProvider identityProvider) : IAuthenticationService
+public class AuthManager(IIdentityProvider identityProvider) : IAuthenticationManager
 {
-    public async Task<ErrorOr<TokenResult>> Login(string username, string password, CancellationToken cancellationToken)
+    public async Task<ErrorOr<TokenResponse>> Login(string username, string password, CancellationToken cancellationToken)
     {
         if (!Username.TryCreate(username, out var validUsername, out var usernameError))
         {
@@ -18,7 +18,7 @@ public class AuthService(IIdentityProvider identityProvider) : IAuthenticationSe
         return await identityProvider.Login(validUsername!, password, cancellationToken);
     }
 
-    public async Task<ErrorOr<TokenResult>> RefreshToken(string refreshToken, CancellationToken cancellationToken)
+    public async Task<ErrorOr<TokenResponse>> RefreshToken(string refreshToken, CancellationToken cancellationToken)
     {
         if (!Domain.ValueObjects.RefreshToken.TryCreate(refreshToken, out var validRefreshToken, out var refreshError))
         {

@@ -21,7 +21,7 @@ public class KeycloakTokenService(
     private readonly KeycloakOptions _keycloakOptions = keycloakOptions.Value;
     private const string AdminTokenCacheKey = "keycloak_admin_token";
     
-    public async Task<ErrorOr<TokenResult>> ExchangeToken(Dictionary<string, string> parameters, CancellationToken cancellationToken)
+    public async Task<ErrorOr<TokenResponse>> ExchangeToken(Dictionary<string, string> parameters, CancellationToken cancellationToken)
     {
         var requestTime = DateTimeOffset.UtcNow;
 
@@ -67,7 +67,7 @@ public class KeycloakTokenService(
             return Error.Validation("Token.RefreshTokenInvalid", refreshError ?? "Invalid refresh token.");
         }
 
-        return new TokenResult(
+        return new TokenResponse(
             AccessToken: accessToken!,
             RefreshToken: refreshToken!,
             AccessTokenExpiresAt: requestTime.AddSeconds(tokenResponse.ExpiresIn),
