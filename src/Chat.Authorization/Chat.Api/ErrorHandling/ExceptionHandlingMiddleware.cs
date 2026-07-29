@@ -2,7 +2,7 @@ using Chat.Api.Extensions;
 using ErrorOr;
 using Microsoft.AspNetCore.Diagnostics;
 
-namespace Chat.Api.Middleware;
+namespace Chat.Api.ErrorHandling;
 
 public class ExceptionHandlingMiddleware(
     ILogger<ExceptionHandlingMiddleware> logger, 
