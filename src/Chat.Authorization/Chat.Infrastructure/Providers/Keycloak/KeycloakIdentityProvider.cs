@@ -2,16 +2,17 @@ using Chat.Domain.Contracts;
 using Chat.Domain.Interfaces;
 using Chat.Domain.ValueObjects;
 using Chat.Infrastructure.Options;
+using Chat.Infrastructure.Options.Keycloak;
 using Microsoft.Extensions.Options;
 
 namespace Chat.Infrastructure.Providers.Keycloak;
 
 public class KeycloakIdentityProvider(
     KeycloakTokenService tokenService, 
-    IOptionsMonitor<IdentityProviderClientOptions> clientOptions
+    IOptions<KeycloakOptions> keycloakOptions
     ) : IIdentityProvider
 {
-    private readonly IdentityProviderClientOptions _userClientOptions = clientOptions.Get(IdentityProviderClientOptions.UserClient);  
+    private readonly IdentityProviderClientOptions _userClientOptions = keycloakOptions.Value.UserClient;  
     
     public async Task<TokenResponse> Login(Username username, string password, CancellationToken cancellationToken)
     {
