@@ -15,7 +15,7 @@
         <PackageReference Include="Google.Protobuf" Version="3.35.1" />
         <PackageReference Include="Grpc.AspNetCore" Version="2.80.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.8" />
-        <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="11.0.0-preview.6.26359.118" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.0" />
         <PackageReference Include="Scalar.AspNetCore" Version="2.16.15" />
     </ItemGroup>
 

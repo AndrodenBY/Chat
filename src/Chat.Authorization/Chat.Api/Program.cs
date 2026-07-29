@@ -1,9 +1,11 @@
 using Chat.Api.Endpoints;
-using Chat.Api.Middleware;
+using Chat.Api.ErrorHandling;
+using Chat.Api.Grpc;
 using Chat.Application;
 using Chat.Infrastructure;
 using Chat.Infrastructure.Options;
 using Chat.Infrastructure.Options.Keycloak;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Options;
 using Scalar.AspNetCore;
 
@@ -12,6 +14,20 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddUserSecrets<Program>();
 builder.Configuration.AddEnvironmentVariables();
 
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(7077, listenOptions =>
+    {
+        listenOptions.UseHttps();
+        listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
+    });
+    
+    options.ListenAnyIP(5236, listenOptions =>
+    {
+        listenOptions.Protocols = HttpProtocols.Http2;
+    });
+});
+
 builder.Services.AddOpenApi();
 
 builder.Services.AddExceptionHandler<ExceptionHandlingMiddleware>();
@@ -19,6 +35,11 @@ builder.Services.AddProblemDetails();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure();
+
+builder.Services.AddGrpc(options =>
+{
+    options.Interceptors.Add<ErrorInterceptor>();
+});
 
 builder.Services.AddOptions<ScalarOptions>()
     .Configure<IOptions<IdentityProviderOptions>, IOptions<KeycloakOptions>>(
@@ -55,13 +76,13 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseExceptionHandler();
-    
-app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapAuthEndpoints();
 app.MapUserManagementEndpoints();
+app.MapGrpcService<GrpcAuthManager>();
+app.MapGrpcService<GrpcUserManagementService>();
 
 app.Run();
