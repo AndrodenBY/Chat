@@ -32,17 +32,25 @@ public class KeycloakTokenService(
 
         if (!response.IsSuccessStatusCode)
         {
-            if (response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.Unauthorized)
+            if (response.StatusCode is HttpStatusCode.Unauthorized)
             {
                 return Error.Validation(
                     code: "Auth.InvalidCredentials",
-                    description: "Invalid credentials or token supplied."
+                    description: "Invalid username or password"
+                );
+            }
+            
+            if (response.StatusCode is HttpStatusCode.BadRequest)
+            {
+                return Error.Validation(
+                    code: "Auth.TokenExpiredOrInvalid",
+                    description: "The provider gran or token is invalid or expired"
                 );
             }
 
             return Error.Failure(
                 code: "Auth.ProviderError",
-                description: $"Identity provider returned HTTP {(int)response.StatusCode}."
+                description: $"Identity provider returned HTTP {(int)response.StatusCode}"
             );
         }
 
@@ -52,18 +60,18 @@ public class KeycloakTokenService(
         {
             return Error.Failure(
                 code: "Auth.NullResponse",
-                description: "Identity provider returned an empty response body."
+                description: "Identity provider returned an empty response body"
             );
         }
 
         if (!AccessToken.TryCreate(tokenResponse.AccessToken, out var accessToken, out var accessError))
         {
-            return Error.Validation("Token.AccessTokenInvalid", accessError ?? "Invalid access token.");
+            return Error.Validation("Token.AccessTokenInvalid", accessError ?? "Invalid access token");
         }
 
         if (!RefreshToken.TryCreate(tokenResponse.RefreshToken, out var refreshToken, out var refreshError))
         {
-            return Error.Validation("Token.RefreshTokenInvalid", refreshError ?? "Invalid refresh token.");
+            return Error.Validation("Token.RefreshTokenInvalid", refreshError ?? "Invalid refresh token");
         }
 
         return new TokenResponse(
@@ -97,7 +105,7 @@ public class KeycloakTokenService(
         {
             return Error.Failure(
                 code: "Auth.AdminTokenFailed",
-                description: "Could not obtain administrative token.");
+                description: "Could not obtain administrative token");
         }
 
         var json = await response.Content.ReadFromJsonAsync<KeycloakTokenResponse>(cancellationToken);
@@ -106,7 +114,7 @@ public class KeycloakTokenService(
         {
             return Error.Failure(
                 code: "Auth.NullResponse",
-                description: "Identity provider returned an empty response body.");
+                description: "Identity provider returned an empty response body");
         }
             
         var cacheExpiry = TimeSpan.FromSeconds(json.ExpiresIn * 0.8);
@@ -127,7 +135,7 @@ public class KeycloakTokenService(
         {
             return Error.Failure(
                 code: "Auth.LogoutFailed",
-                description: "Failed to revoke session with the identity provider."
+                description: "Failed to revoke session with the identity provider"
             );
         }
 
