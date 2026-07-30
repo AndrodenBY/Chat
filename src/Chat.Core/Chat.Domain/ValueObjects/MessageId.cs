@@ -1,3 +1,5 @@
+using Chat.Domain.Common;
+
 namespace Chat.Domain.ValueObjects;
 
 public readonly record struct MessageId
@@ -6,11 +8,11 @@ public readonly record struct MessageId
     
     private MessageId(long value) => Value = value;
 
-    public static MessageId Create(long value)
+    public static Result<MessageId> Create(long value)
     {
         if (value <= 0)
         {
-            //return "MessageId must be a positive value";
+            return Error.Validation("MessageId.MustBePositive", "Value must be greater than 0");
         }
 
         return new MessageId(value);

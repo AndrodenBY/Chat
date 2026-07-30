@@ -1,3 +1,5 @@
+using Chat.Domain.Common;
+
 namespace Chat.Domain.ValueObjects;
 
 public readonly record struct RoomId
@@ -6,11 +8,11 @@ public readonly record struct RoomId
     
     private RoomId(long value) => Value = value;
 
-    public static RoomId Create(long value)
+    public static Result<RoomId> Create(long value)
     {
         if (value <= 0)
         {
-            //return "RoomId must be a positive value";
+            return  Error.Validation("RoomId.MustBePositive", "Value must be greater than 0");
         }
 
         return new RoomId(value);

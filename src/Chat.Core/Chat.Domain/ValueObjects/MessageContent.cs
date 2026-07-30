@@ -1,3 +1,5 @@
+using Chat.Domain.Common;
+
 namespace Chat.Domain.ValueObjects;
 
 public readonly record struct MessageContent
@@ -7,16 +9,16 @@ public readonly record struct MessageContent
     
     private MessageContent(string value) => Value = value;
 
-    public static MessageContent Create(string value)
+    public static Result<MessageContent> Create(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
-            // return "MessageContent cannot be empty";
+            return Error.Validation("Message.ContentRequired", "Message content cannot be empty");
         }
 
         if (value.Length > MaxLength)
         {
-            // return "Message content cannot exceed MaxLength";
+            return Error.Validation("Message.ContentTooLong", "Message content cannot be longer than 2000 characters");
         }
 
         return new MessageContent(value);

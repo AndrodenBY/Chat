@@ -1,3 +1,4 @@
+using Chat.Domain.Common;
 using Chat.Domain.ValueObjects;
 
 namespace Chat.Domain.Entities;
@@ -17,13 +18,13 @@ public class ChatRoom
         CreatedAt = createdAt;
     }
 
-    public static ChatRoom Create(RoomId id, string name, string description, DateTimeOffset createdAt)
+    public static Result<ChatRoom> Create(RoomId id, string name, string? description = null, DateTimeOffset? createdAt = null)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
-            // return "Chat room name cannot be empty";
+            return Error.Validation("ChatRoom.NameRequired", "Name cannot be empty");
         }
         
-        return new ChatRoom(id, name, description, createdAt);
+        return new ChatRoom(id, name.Trim(), description!.Trim(), createdAt ?? DateTimeOffset.UtcNow);
     }
 }

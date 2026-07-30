@@ -1,3 +1,4 @@
+using Chat.Domain.Common;
 using Chat.Domain.ValueObjects;
 
 namespace Chat.Domain.Entities;
@@ -19,13 +20,13 @@ public class Message
         CreatedAt = createdAt;
     }
 
-    public static Message Create(MessageId id, RoomId roomId, string senderId, MessageContent content, DateTimeOffset createdAt)
+    public static Result<Message> Create(MessageId id, RoomId roomId, string senderId, MessageContent content, DateTimeOffset? createdAt = null)
     {
         if (string.IsNullOrWhiteSpace(senderId))
         {
-            // return "SenderId is required";
+            return Error.Validation("Create.InvalidSenderId", "SenderId cannot be empty");
         }
 
-        return new Message(id, roomId, senderId, content, createdAt);
+        return new Message(id, roomId, senderId, content, createdAt ?? DateTimeOffset.UtcNow);
     }
 }
