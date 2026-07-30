@@ -1,4 +1,4 @@
-namespace Chat.Domain.Common;
+namespace Chat.Domain.Common.Result;
 
 public readonly struct Result
 {

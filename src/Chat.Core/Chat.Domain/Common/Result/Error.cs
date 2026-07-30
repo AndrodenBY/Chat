@@ -1,4 +1,4 @@
-namespace Chat.Domain.Common;
+namespace Chat.Domain.Common.Result;
 
 public readonly record struct Error(string Code, string Message, ErrorType type)
 {

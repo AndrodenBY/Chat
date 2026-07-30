@@ -1,5 +1,5 @@
 using Chat.Domain.Common.Pagination;
-using Chat.Domain.Contracts.Specifications;
+using Chat.Domain.Contracts.Specification;
 
 namespace Chat.Domain.Contracts;
 

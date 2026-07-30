@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace Chat.Domain.Contracts.Specifications;
+namespace Chat.Domain.Contracts.Specification;
 
 public interface ISpecification<TValue>
 {
