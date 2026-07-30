@@ -1,4 +1,5 @@
 using Chat.Domain.Common;
+using Chat.Domain.Common.Result;
 using Chat.Domain.ValueObjects;
 
 namespace Chat.Domain.Entities;
@@ -26,7 +27,9 @@ public class Message
         {
             return Error.Validation("Create.InvalidSenderId", "SenderId cannot be empty");
         }
+        
+        var now = createdAt ?? DateTimeOffset.UtcNow;
 
-        return new Message(id, roomId, senderId, content, createdAt ?? DateTimeOffset.UtcNow);
+        return new Message(id, roomId, senderId, content, now);
     }
 }

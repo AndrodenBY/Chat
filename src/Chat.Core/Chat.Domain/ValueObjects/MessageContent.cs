@@ -1,4 +1,5 @@
 using Chat.Domain.Common;
+using Chat.Domain.Common.Result;
 
 namespace Chat.Domain.ValueObjects;
 
