@@ -143,6 +143,8 @@ public class UserManagementService(IIdentityUserProvider identityUserProvider) :
     
     private static ErrorOr<(Username Username, Email Email)> ValidateIdentity(string usernameValue, string emailValue)
     {
+        var errors = new List<Error>();
+        
         if (!Username.TryCreate(usernameValue, out var username, out var usernameError))
         {
             return Error.Validation("User.InvalidUsername", usernameError ?? "Invalid username.");
@@ -153,6 +155,11 @@ public class UserManagementService(IIdentityUserProvider identityUserProvider) :
             return Error.Validation("User.InvalidEmail", emailError ?? "Invalid email.");
         }
 
+        if (errors.Count > 0)
+        {
+            return errors;
+        }
+
         return (username!, email!);
     }
 
@@ -160,7 +167,7 @@ public class UserManagementService(IIdentityUserProvider identityUserProvider) :
     {
         if (!ExternalId.TryCreate(externalId, out var validExternalId, out var externalIdError))
         {
-            return Error.Validation("Auth.InvalidExternalId", externalIdError ?? "Invalid external id.");
+            return Error.Validation("User.InvalidExternalId", externalIdError ?? "Invalid external id.");
         }
         
         return validExternalId!;

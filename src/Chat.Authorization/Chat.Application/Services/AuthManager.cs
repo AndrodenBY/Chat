@@ -22,7 +22,7 @@ public class AuthManager(IIdentityProvider identityProvider) : IAuthenticationMa
     {
         if (!Domain.ValueObjects.RefreshToken.TryCreate(refreshToken, out var validRefreshToken, out var refreshError))
         {
-            return Error.Validation("Token.RefreshTokenInvalid", refreshError ?? "Invalid refresh token.");
+            return Error.Validation("Token.InvalidRefreshToken", refreshError ?? "Invalid refresh token.");
         } 
         
         return await identityProvider.RefreshToken(validRefreshToken!, cancellationToken);
@@ -32,7 +32,7 @@ public class AuthManager(IIdentityProvider identityProvider) : IAuthenticationMa
     {
         if (!Domain.ValueObjects.RefreshToken.TryCreate(refreshToken, out var validRefreshToken, out var refreshError))
         {
-            return Error.Validation("Token.RefreshTokenInvalid", refreshError ?? "Invalid refresh token.");
+            return Error.Validation("Token.InvalidRefreshToken", refreshError ?? "Invalid refresh token.");
         }
         
         await identityProvider.Logout(validRefreshToken!, cancellationToken);
