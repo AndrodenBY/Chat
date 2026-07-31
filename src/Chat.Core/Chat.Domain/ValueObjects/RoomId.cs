@@ -22,5 +22,4 @@ public readonly record struct RoomId
     }
 
     public static implicit operator long(RoomId id) => id.Value;
-    public override string ToString() => Value.ToString();
 }

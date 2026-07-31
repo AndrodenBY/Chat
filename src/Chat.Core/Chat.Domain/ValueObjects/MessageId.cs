@@ -20,4 +20,6 @@ public readonly record struct MessageId
 
         return new MessageId(value);
     }
+    
+    public static explicit operator long(MessageId id) => id.Value;
 }
