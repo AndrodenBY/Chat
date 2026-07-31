@@ -1,4 +1,3 @@
-using Chat.Domain.Common;
 using Chat.Domain.Common.Result;
 using Chat.Domain.ValueObjects;
 
@@ -31,5 +30,23 @@ public class Message
         var now = createdAt ?? DateTimeOffset.UtcNow;
 
         return new Message(id, roomId, senderId, content, now);
+    }
+
+    public Result<bool> UpdateDetails(string? content = null)
+    {
+        var contentResult = MessageContent.Create(content);
+
+        if (contentResult.IsFailure)
+        {
+            return contentResult.PrimaryError;
+        }
+
+        if (contentResult.Value != Content)
+        {
+            Content = contentResult.Value;
+            return true;
+        }
+
+        return false;
     }
 }
