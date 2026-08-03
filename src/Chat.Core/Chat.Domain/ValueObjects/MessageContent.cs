@@ -10,7 +10,7 @@ public readonly record struct MessageContent
     
     private MessageContent(string value) => Value = value;
 
-    public static Result<MessageContent> Create(string value)
+    public static Result<MessageContent> Create(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
@@ -24,4 +24,6 @@ public readonly record struct MessageContent
 
         return new MessageContent(value);
     }
+    
+    public static explicit operator string(MessageContent content) => content.Value;
 }
