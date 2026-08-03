@@ -67,6 +67,10 @@ public class ChatRoom
         if (name is not null)
         {
             var nameResult = RoomName.Create(name);
+            if (nameResult.IsFailure)
+            {
+                return nameResult.PrimaryError;
+            }
 
             if (nameResult.Value != Name)
             {
@@ -78,7 +82,11 @@ public class ChatRoom
         if (description is not null)
         {
             var descriptionResult = RoomDescription.Create(description);
-
+            if (descriptionResult.IsFailure)
+            {
+                return descriptionResult.PrimaryError;
+            }
+            
             if (descriptionResult.Value != Description)
             {
                 Description = descriptionResult.Value;
@@ -89,8 +97,8 @@ public class ChatRoom
         return hasChanges;
     }
     
-    public void Touch(DateTimeOffset updatedAt)
+    public void Touch(DateTimeOffset? updatedAt = null)
     {
-        UpdatedAt = updatedAt;
+        UpdatedAt = updatedAt ?? DateTimeOffset.UtcNow;
     }
 }
