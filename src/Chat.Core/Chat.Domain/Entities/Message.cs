@@ -35,7 +35,6 @@ public class Message
     public Result<bool> UpdateDetails(string? content = null)
     {
         var contentResult = MessageContent.Create(content);
-
         if (contentResult.IsFailure)
         {
             return contentResult.PrimaryError;
