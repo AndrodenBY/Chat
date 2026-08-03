@@ -1,3 +1,3 @@
 namespace Chat.Domain.ValueObjects;
 
-public readonly record struct UserConnection(string UserId, string Username, string RoomName);
+public record UserConnection(string ConnectionId, string UserId, string Username, string RoomId);
