@@ -30,7 +30,7 @@ public class SendMessageCommandHandler(
         var messageId = MessageId.From(snowflakeIdGenerator.NextId());
         
         var connection = connectionResult.Value;
-        var roomId = RoomId.From(long.Parse(connection.RoomId));
+        var roomId = RoomId.From(connection.RoomId);
         
         var message = Message.Create(messageId, roomId, connection.UserId, contentResult);
         if (message.IsFailure)
