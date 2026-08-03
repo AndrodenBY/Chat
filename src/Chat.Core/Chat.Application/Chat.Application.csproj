@@ -16,9 +16,4 @@
       <PackageReference Include="Snowflakes" Version="2.0.0" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Commands\Message\" />
-      <Folder Include="Commands\Room\" />
-    </ItemGroup>
-
 </Project>
