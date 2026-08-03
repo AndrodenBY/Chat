@@ -3,15 +3,14 @@ using Chat.Application.Contracts;
 using Chat.Application.DTOs;
 using Chat.Domain.Common.Result;
 using Chat.Domain.Contracts;
-using Chat.Domain.Entities;
 using Chat.Domain.ValueObjects;
 using DispatchR.Abstractions.Send;
 
-namespace Chat.Application.Handlers;
+namespace Chat.Application.Handlers.Message;
 
 public class SendMessageCommandHandler(
     IConnectionTracker connectionTracker,
-    IRepository<Message, MessageId> messageRepository,
+    IRepository<Domain.Entities.Message, MessageId> messageRepository,
     ISnowflakeIdGenerator snowflakeIdGenerator,
     IChatClient chatClient) 
     : IRequestHandler<SendMessageCommand, ValueTask<Result<MessageDto>>>
@@ -32,7 +31,7 @@ public class SendMessageCommandHandler(
         var connection = connectionResult.Value;
         var roomId = RoomId.From(long.Parse(connection.RoomId));
         
-        var message = Message.Create(messageId, roomId, connection.UserId, contentResult);
+        var message = Domain.Entities.Message.Create(messageId, roomId, connection.UserId, contentResult);
         if (message.IsFailure)
         {
             return message.PrimaryError;

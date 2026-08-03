@@ -6,7 +6,7 @@ using Chat.Domain.Entities;
 using Chat.Domain.ValueObjects;
 using DispatchR.Abstractions.Send;
 
-namespace Chat.Application.Handlers;
+namespace Chat.Application.Handlers.Room;
 
 public class UpdateRoomCommandHandler(IRepository<ChatRoom, RoomId> roomRepository)
     : IRequestHandler<UpdateRoomCommand, ValueTask<Result<ChatRoomDto>>>
