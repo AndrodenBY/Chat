@@ -1,4 +1,5 @@
 using Chat.Application.Commands;
+using Chat.Application.Commands.Room;
 using Chat.Application.DTOs;
 using Chat.Domain.Common.Result;
 using Chat.Domain.Contracts;
