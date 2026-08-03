@@ -27,11 +27,19 @@ public class ExceptionHandlingMiddleware(
     {
         var error = exception switch
         {
-            KeyNotFoundException ex => Error.NotFound("Resource.NotFound", ex.Message),
-            ArgumentException ex => Error.Validation("Request.InvalidArgument", ex.Message),
-            UnauthorizedAccessException ex => Error.Unauthorized("Access.Unauthorized", ex.Message),
-            InvalidOperationException ex => Error.Conflict("Operation.Invalid", ex.Message),
-            _ => Error.Unexpected("Server.Error", "An unexpected error occured")
+            KeyNotFoundException => 
+                Error.NotFound("Resource.NotFound", "The requested resource was not found."),
+
+            ArgumentException => 
+                Error.Validation("Request.InvalidArgument", "The request contains invalid data."),
+
+            UnauthorizedAccessException => 
+                Error.Unauthorized("Access.Unauthorized", "You are not authorized to perform this action."),
+
+            InvalidOperationException => 
+                Error.Conflict("Operation.Invalid", "The requested operation cannot be completed."),
+
+            _ => Error.Unexpected("Server.Error", "An unexpected error occurred.")
         };
         
         httpContext.Response.StatusCode = error.Type.ToStatusCode();
