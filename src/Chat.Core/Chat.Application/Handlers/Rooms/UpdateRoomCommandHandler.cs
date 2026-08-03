@@ -1,5 +1,4 @@
-using Chat.Application.Commands;
-using Chat.Application.Commands.Room;
+using Chat.Application.Commands.Rooms;
 using Chat.Application.DTOs;
 using Chat.Domain.Common.Result;
 using Chat.Domain.Contracts;
@@ -7,7 +6,7 @@ using Chat.Domain.Entities;
 using Chat.Domain.ValueObjects;
 using DispatchR.Abstractions.Send;
 
-namespace Chat.Application.Handlers.Room;
+namespace Chat.Application.Handlers.Rooms;
 
 public class UpdateRoomCommandHandler(IRepository<ChatRoom, RoomId> roomRepository)
     : IRequestHandler<UpdateRoomCommand, ValueTask<Result<ChatRoomDto>>>

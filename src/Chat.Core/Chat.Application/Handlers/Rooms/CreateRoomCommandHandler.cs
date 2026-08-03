@@ -1,5 +1,4 @@
-using Chat.Application.Commands;
-using Chat.Application.Commands.Room;
+using Chat.Application.Commands.Rooms;
 using Chat.Application.Contracts;
 using Chat.Application.DTOs;
 using Chat.Domain.Common.Result;
@@ -8,7 +7,7 @@ using Chat.Domain.Entities;
 using Chat.Domain.ValueObjects;
 using DispatchR.Abstractions.Send;
 
-namespace Chat.Application.Handlers.Room;
+namespace Chat.Application.Handlers.Rooms;
 
 public class CreateRoomCommandHandler(
     IRepository<ChatRoom, RoomId> roomRepository,
