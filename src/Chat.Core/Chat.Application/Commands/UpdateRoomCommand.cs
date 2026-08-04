@@ -5,4 +5,4 @@ using DispatchR.Abstractions.Send;
 namespace Chat.Application.Commands;
 
 public record UpdateRoomCommand(long Id, string Name, string? Description)
-    : IRequest<UpdateRoomCommand, Result<ChatRoomDto>>;
+    : IRequest<UpdateRoomCommand, ValueTask<Result<ChatRoomDto>>>;
